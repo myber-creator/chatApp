@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToMany, OneToMany, JoinColumn } from 'typeorm';
-import { RoomEntity } from '../room/room.entity';
-import { MessageEntity } from '../message/message.entity';
+import { RoomEntity } from '../chat/room/room.entity';
+import { MessageEntity } from '../chat/message/message.entity';
 import { Base } from '../utils/base';
 
 @Entity('User')

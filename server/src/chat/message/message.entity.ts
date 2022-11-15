@@ -1,7 +1,7 @@
 import { UserEntity } from 'src/user/user.entity';
-import { RoomEntity } from 'src/room/room.entity';
+import { RoomEntity } from '../room/room.entity';
 import { Entity, ManyToOne, JoinColumn, Column } from 'typeorm';
-import { Base } from '../utils/base';
+import { Base } from '../../utils/base';
 
 @Entity('Message')
 export class MessageEntity extends Base {

@@ -3,13 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getTypeOrmConfig } from './config/typeorm.config';
 import { UserModule } from './user/user.module';
-import { RoomModule } from './room/room.module';
-import { MessageModule } from './message/message.module';
-import { AuthModule } from './auth/auth.module';
-import { RoomModule } from './room/room.module';
-import { MessageModule } from './message/message.module';
-import { MessageModule } from './message/message.module';
-
+import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -19,11 +13,7 @@ import { MessageModule } from './message/message.module';
       useFactory: getTypeOrmConfig,
     }),
     UserModule,
-    RoomModule,
-    MessageModule,
-    AuthModule,
+    ChatModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}
