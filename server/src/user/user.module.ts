@@ -1,3 +1,4 @@
+import { JwtStrategy } from './../strategies/jwt.strategy';
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
@@ -9,7 +10,7 @@ import { UserEntity } from './user.entity';
 
 @Module({
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, JwtStrategy],
   imports: [
     ConfigModule,
     JwtModule.registerAsync({
