@@ -15,4 +15,7 @@ export class UserRegisterDto extends UserLoginDto {
   @IsString()
   @IsNotEmpty()
   username: string;
+
+  @IsString()
+  avatarPath: string;
 }

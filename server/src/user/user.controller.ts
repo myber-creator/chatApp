@@ -1,5 +1,4 @@
-import { Auth } from './../decorators/auth.decorator';
-import { RefreshTokenDto } from './refresh-token.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import {
   Body,
   Controller,
@@ -7,10 +6,14 @@ import {
   Post,
   UsePipes,
   ValidationPipe,
+  Req,
+  Res,
+  Get,
 } from '@nestjs/common';
-import { UserLoginDto, UserRegisterDto } from './user-auth.dto';
+import { UserLoginDto, UserRegisterDto } from './dto/user-auth.dto';
 import { UserService } from './user.service';
-import { Query } from '@nestjs/common/decorators';
+import { Request, Response } from 'express';
+import { Auth } from 'src/decorators/auth.decorator';
 
 @Controller('user')
 export class UserController {
@@ -19,29 +22,44 @@ export class UserController {
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Post('login')
-  async login(@Body() dto: UserLoginDto) {
-    return this.userService.login(dto);
+  async login(
+    @Body() dto: UserLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.userService.login(dto, res);
   }
 
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
-  @Post('login/access-token')
-  async getNewTokens(@Body() dto: RefreshTokenDto) {
+  @Post('login/refresh')
+  async getNewTokens(@Req() req: Request) {
+    const dto: RefreshTokenDto = { refreshToken: req.cookies['token'] };
+
     return this.userService.getNewTokens(dto);
   }
 
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @Post('register')
-  async register(@Body() dto: UserRegisterDto) {
-    return this.userService.create(dto);
+  async register(
+    @Body() dto: UserRegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.userService.create(dto, res);
   }
 
   @UsePipes(new ValidationPipe())
   @HttpCode(200)
-  @Post('exit')
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('token');
+  }
+
+  @UsePipes(new ValidationPipe())
+  @HttpCode(200)
   @Auth()
-  async exit(@Query('id') id: number) {
-    return this.userService.exit(id);
+  @Get('anotherUsers')
+  async getAnotherUsers(@Body() { id }) {
+    return this.userService.getAnotherUsers(id);
   }
 }

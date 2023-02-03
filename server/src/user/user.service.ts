@@ -6,11 +6,12 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository, ArrayContains, Not, IsNull } from 'typeorm';
-import { UserLoginDto, UserRegisterDto } from './user-auth.dto';
+import { Like, Repository, Not, IsNull, In } from 'typeorm';
+import { UserLoginDto, UserRegisterDto } from './dto/user-auth.dto';
 import { UserEntity } from './user.entity';
 import { compare, genSalt, hash } from 'bcryptjs';
-import { RefreshTokenDto } from './refresh-token.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { Response } from 'express';
 
 @Injectable()
 export class UserService {
@@ -20,7 +21,7 @@ export class UserService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async create(dto: UserRegisterDto) {
+  async create(dto: UserRegisterDto, res: Response) {
     const oldUser = await this.userRepository.findOne({
       where: [{ email: dto.email }, { username: dto.username }],
     });
@@ -33,38 +34,32 @@ export class UserService {
       email: dto.email,
       password: await hash(dto.password, salt),
       username: dto.username,
+      avatarPath: dto.avatarPath,
+      rooms: [],
     });
 
     const user = await this.userRepository.save(newUser);
 
     const tokens = await this.issuePairTokens(user.id);
 
+    res.cookie('token', tokens.refreshToken, { httpOnly: true });
+
     return {
       user: this.getUserFields(user),
       ...tokens,
     };
   }
 
-  async login(dto: UserLoginDto) {
+  async login(dto: UserLoginDto, res: Response) {
     const user = await this.validateUser(dto);
     const tokens = await this.issuePairTokens(user.id);
 
-    user.isOnline = true;
-    await this.userRepository.save(user);
+    res.cookie('token', tokens.refreshToken, { httpOnly: true });
 
     return {
       user: this.getUserFields(user),
       ...tokens,
     };
-  }
-
-  async exit(id: number) {
-    const user = await this.userRepository.findOne({ where: { id } });
-
-    if (!user) throw new NotFoundException('Пользователь не найден!');
-
-    user.isOnline = false;
-    await this.userRepository.save(user);
   }
 
   async findAllByUsername(username: string) {
@@ -76,7 +71,9 @@ export class UserService {
   async findAllOnlineJoined(id_room: number) {
     return await this.userRepository.find({
       where: {
-        rooms: ArrayContains([id_room]),
+        rooms: {
+          id: id_room,
+        },
         socketId: Not(IsNull()),
       },
       select: ['socketId'],
@@ -84,16 +81,24 @@ export class UserService {
   }
 
   async getSocketById(id: number) {
-    return await this.userRepository.find({
+    return await this.userRepository.findOne({
       where: { id },
-      select: ['socketId'],
+      select: ['id', 'socketId'],
     });
   }
 
   async findById(id: number) {
     return await this.userRepository.findOne({
       where: { id },
+      select: ['id', 'username', 'avatarPath', 'socketId', 'isOnline'],
     });
+  }
+
+  async setOnline(user: UserEntity, isOnline: boolean) {
+    if (user) {
+      user.isOnline = isOnline;
+      await this.userRepository.save(user);
+    }
   }
 
   async validateUser(dto: UserLoginDto) {
@@ -103,7 +108,9 @@ export class UserService {
       },
       select: ['id', 'email', 'password', 'username', 'avatarPath', 'rooms'],
       relations: {
-        rooms: true,
+        rooms: {
+          messages: true,
+        },
       },
     });
 
@@ -125,7 +132,7 @@ export class UserService {
     });
 
     const accessToken = await this.jwtService.signAsync(data, {
-      expiresIn: '1m',
+      expiresIn: '1h',
     });
 
     return {
@@ -139,12 +146,14 @@ export class UserService {
       throw new UnauthorizedException('Пользователь не авторизован!');
 
     const result = await this.jwtService.verifyAsync(refreshToken);
-    console.log(result);
 
     if (!result) throw new UnauthorizedException('Токен не верный!');
 
     const user = await this.userRepository.findOne({
       where: { id: result.id },
+      relations: {
+        rooms: true,
+      },
     });
 
     const tokens = await this.issuePairTokens(user.id);
@@ -153,6 +162,24 @@ export class UserService {
       user: this.getUserFields(user),
       ...tokens,
     };
+  }
+
+  async getAnotherUsers(id: number) {
+    const usersInRoom = await this.userRepository.find({
+      where: {
+        rooms: {
+          id,
+        },
+      },
+    });
+
+    const users = await this.userRepository.find({
+      where: {
+        id: Not(In(usersInRoom.map((u) => u.id))),
+      },
+    });
+
+    return users;
   }
 
   getUserFields(user: UserEntity) {

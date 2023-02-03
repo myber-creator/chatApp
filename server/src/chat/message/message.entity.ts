@@ -8,6 +8,12 @@ export class MessageEntity extends Base {
   @Column()
   body: string;
 
+  @Column({ default: false })
+  isEdit: boolean;
+
+  @Column({ default: false })
+  isRead: boolean;
+
   @ManyToOne(() => UserEntity, (user) => user.messages)
   author: UserEntity;
 

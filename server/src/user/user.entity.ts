@@ -1,18 +1,11 @@
-import {
-  Entity,
-  Column,
-  ManyToMany,
-  OneToMany,
-  JoinColumn,
-  JoinTable,
-} from 'typeorm';
+import { Entity, Column, ManyToMany, OneToMany, JoinTable } from 'typeorm';
 import { RoomEntity } from '../chat/room/room.entity';
 import { MessageEntity } from '../chat/message/message.entity';
 import { Base } from '../utils/base';
 
 @Entity('User')
 export class UserEntity extends Base {
-  @Column({ unique: true })
+  @Column({ unique: true, select: false })
   email: string;
 
   @Column({ select: false })
@@ -28,7 +21,7 @@ export class UserEntity extends Base {
   isOnline: boolean;
 
   @Column({ default: null, name: 'socket_id', select: false })
-  socketId?: number;
+  socketId?: string;
 
   @ManyToMany(() => RoomEntity, (room) => room.users)
   @JoinTable()
