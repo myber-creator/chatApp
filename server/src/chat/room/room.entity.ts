@@ -1,7 +1,8 @@
+import { UnreadingMessagesEntity } from './../unreading-messages/unreading-messages.entity';
 import { UserEntity } from 'src/user/user.entity';
-import { MessageEntity } from '../message/message.entity';
-import { Entity, ManyToMany, OneToMany, Column, JoinTable } from 'typeorm';
+import { Entity, ManyToMany, OneToMany, Column } from 'typeorm';
 import { Base } from '../../utils/base';
+import { BlockMessagesEntity } from '../block-messages/block-messages.entity';
 
 @Entity('Room')
 export class RoomEntity extends Base {
@@ -11,7 +12,9 @@ export class RoomEntity extends Base {
   @ManyToMany(() => UserEntity, (user) => user.rooms)
   users: UserEntity[];
 
-  @OneToMany(() => MessageEntity, (message) => message.room)
-  @JoinTable()
-  messages: MessageEntity[];
+  @OneToMany(() => BlockMessagesEntity, (block) => block.room)
+  blocks: BlockMessagesEntity[];
+
+  @OneToMany(() => UnreadingMessagesEntity, (message) => message.room)
+  unreadingMessages: UnreadingMessagesEntity[];
 }

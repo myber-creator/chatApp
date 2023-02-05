@@ -1,3 +1,4 @@
+import { NotifyEntity } from './../chat/notify/notify.entity';
 import { Entity, Column, ManyToMany, OneToMany, JoinTable } from 'typeorm';
 import { RoomEntity } from '../chat/room/room.entity';
 import { MessageEntity } from '../chat/message/message.entity';
@@ -28,6 +29,8 @@ export class UserEntity extends Base {
   rooms: RoomEntity[];
 
   @OneToMany(() => MessageEntity, (message) => message.author)
-  @JoinTable()
   messages: MessageEntity[];
+
+  @OneToMany(() => NotifyEntity, (notify) => notify.author)
+  notifies: NotifyEntity[];
 }

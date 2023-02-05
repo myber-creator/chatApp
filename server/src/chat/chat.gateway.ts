@@ -1,3 +1,4 @@
+import { UserEntity } from './../user/user.entity';
 import { IUser } from './../types/User';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from './../user/user.service';
@@ -7,6 +8,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { ChatService } from './chat.service';
 import { MessageService } from './message/message.service';
@@ -16,8 +18,11 @@ import {
   UnauthorizedException,
   BadGatewayException,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
-import { RoomDto } from './room/room.dto';
+// import { RoomDto } from './room/dto/room.dto';
+import { BlockMessagesService } from './block-messages/block-messages.service';
+import { WsGuard } from 'src/decorators/auth-socket.decorator';
 
 @WebSocketGateway({
   cors: {
@@ -37,6 +42,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private userService: UserService,
     private roomService: RoomService,
     private messageService: MessageService,
+    private blockMessagesService: BlockMessagesService,
     private jwtService: JwtService,
   ) {}
 
@@ -59,7 +65,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       user.socketId = socket.id;
 
-      const rooms = await this.roomService.getRoomsForUser(user.id);
+      const rooms = await this.roomService.getRoomsForUser(user);
 
       return this.server.to(socket.id).emit('rooms', rooms);
     } catch {
@@ -68,8 +74,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async handleDisconnect(socket: Socket) {
-    socket.data.user.socketId = null;
-    await this.userService.setOnline(socket.data.user, false);
+    if (socket.data.user) {
+      socket.data.user.socketId = null;
+      await this.userService.setOnline(socket.data.user, false);
+    }
 
     socket.disconnect();
   }
@@ -79,6 +87,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     socket.disconnect();
   }
 
+  @UseGuards(WsGuard)
   @SubscribeMessage('createRoom')
   async createRoom(socket: Socket, dto: string) {
     const createdRoom = await this.roomService.createRoom(
@@ -86,25 +95,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.data.user,
     );
 
-    const connections: IUser[] = await this.roomService.getConnectedUsers(
+    const connections: UserEntity[] = await this.roomService.getConnectedUsers(
       createdRoom.users,
     );
 
     for (const user of connections) {
-      const rooms = await this.roomService.getRoomsForUser(user.id);
+      const rooms = await this.roomService.getRoomsForUser(user);
 
       await this.server.to(user.socketId).emit('rooms', rooms);
     }
   }
 
-  // TODO: Новым пользователям отправлять руму. Старым - новых юзеров. Добавить сообщение о добавление как messageEntity
+  // TODO: Новым пользователям отправлять руму. Старым - новых юзеров. Добавить сообщение о добавление как notifyEntity
+  @UseGuards(WsGuard)
   @SubscribeMessage('addUsersToRoom')
   async addUserToRoom(socket: Socket, dto: string) {
     const idRoom = JSON.parse(dto).id;
     const users = JSON.parse(dto).users;
 
+    if (!users.length)
+      throw new WsException(
+        new BadGatewayException('Список пользователей пуст!'),
+      );
+
     const room = await this.roomService.findById(idRoom);
-    if (!room) throw new NotFoundException('Комната не найдена!');
+    if (!room)
+      throw new WsException(new NotFoundException('Комната не найдена!'));
 
     const newUsers = [];
     for (let index = 0; index < users.length; index++) {
@@ -129,12 +145,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // TODO: Добавить сообщение о выходе из беседы.
   // Если список пользователей равен 0, удалять руму
+  // Сделать проверку на пустоту комнаты
+  @UseGuards(WsGuard)
   @SubscribeMessage('leaveFromRoom')
   async leaveFromRoom(socket: Socket, dto: string) {
     const idRoom = JSON.parse(dto).id;
 
     const room = await this.roomService.findById(idRoom);
-    if (!room) throw new NotFoundException('Комната не найдена!');
+    if (!room)
+      throw new WsException(new NotFoundException('Комната не найдена!'));
+
+    if (!room.users.find((u) => u.id === socket.data.user.id))
+      throw new WsException(
+        new BadGatewayException('Пользователь не был подключён к беседе!'),
+      );
 
     const users = await this.roomService.leaveFromRoom(room, socket.data.user);
 
@@ -149,15 +173,38 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @UseGuards(WsGuard)
+  @SubscribeMessage('getBlocksRoom')
+  async getBlocksRoom(socket: Socket, dto: string) {
+    const id = JSON.parse(dto).id;
+
+    const room = await this.roomService.findById(id);
+    if (!room)
+      throw new WsException(new NotFoundException('Комната не найдена!'));
+
+    const blocks = await this.roomService.getBlocksByRoom(id);
+
+    await this.server
+      .to(socket.data.user.socketId)
+      .emit('getBlocksRoom', blocks);
+  }
+
+  // TODO: Подумать над блоками сообщений:
+  // (Дата)
+  // Сообщения / оповещения (... вышел из чата).
+  // Сущность оповещения: id, author, body, candidate? (кого добавил, если null, значит, вышел), \
+  // afterMessageId? (Если null, первым в блоке), idBlock (Many to One)
+  @UseGuards(WsGuard)
   @SubscribeMessage('sendMessage')
   async sendMessage(socket: Socket, dto: string) {
     const messageDto = JSON.parse(dto);
 
     const room = await this.roomService.findById(messageDto.roomId);
 
-    if (!room) throw new NotFoundException('Комната не найдена!');
+    if (!room)
+      throw new WsException(new NotFoundException('Комната не найдена!'));
 
-    const message = await this.messageService.createMessage(
+    const message = await this.blockMessagesService.createMessage(
       messageDto.body,
       socket.data.user,
       room,
@@ -169,39 +216,60 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  // TODO: Установка оповещению afterMessage предыдущему удаляемому (если нет, null).
+  @UseGuards(WsGuard)
   @SubscribeMessage('deleteMessage')
   async deleteMessage(socket: Socket, dto: string) {
     const id = JSON.parse(dto).id;
+    const roomId = JSON.parse(dto).roomId;
 
     const message = await this.messageService.findById(id);
 
     if (!message) throw new NotFoundException('Сообщение не найдено!');
 
     if (message.author.id !== socket.data.user.id)
-      throw new BadGatewayException('Сообщение не принадлежит пользователю!');
+      throw new WsException(
+        new BadGatewayException('Сообщение не принадлежит пользователю!'),
+      );
 
-    const room = await this.roomService.findById(message.room.id);
+    const room = await this.roomService.findById(roomId);
+    if (!room)
+      throw new WsException(new NotFoundException('Комната не найдена!'));
+
     await this.messageService.deleteMessage(message);
+
+    const idBlock = this.blockMessagesService.checkIsEmptyBlock(
+      message.block.id,
+    );
 
     const connections = await this.roomService.getConnectedUsers(room.users);
     for (const user of connections) {
-      await this.server.to(user.socketId).emit('deleteMessage', message);
+      await this.server.to(user.socketId).emit('deleteMessage', {
+        ...message,
+        id,
+        deletedBlock: idBlock,
+      });
     }
   }
 
+  @UseGuards(WsGuard)
   @SubscribeMessage('editMessage')
   async editMessage(socket: Socket, dto: string) {
     const id = JSON.parse(dto).id;
+    const roomId = JSON.parse(dto).roomId;
     const body = JSON.parse(dto).body;
 
     const message = await this.messageService.findById(id);
 
-    if (!message) throw new NotFoundException('Сообщение не найдено!');
+    if (!message)
+      throw new WsException(new NotFoundException('Сообщение не найдено!'));
 
     if (message.author.id !== socket.data.user.id)
-      throw new BadGatewayException('Сообещние не принадлежит пользователю!');
+      throw new WsException(
+        new BadGatewayException('Сообещние не принадлежит пользователю!'),
+      );
 
-    const room = await this.roomService.findById(message.room.id);
+    const room = await this.roomService.findById(roomId);
     const editedMessage = await this.messageService.editMessage(
       message.id,
       body,
@@ -213,21 +281,50 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @UseGuards(WsGuard)
   @SubscribeMessage('readMessage')
   async readMessage(socket: Socket, dto: string) {
     const id = JSON.parse(dto).id;
 
     const message = await this.messageService.findById(id);
 
-    if (!message) throw new NotFoundException('Сообщение не найдено!');
+    if (!message)
+      throw new WsException(new NotFoundException('Сообщение не найдено!'));
 
     if (message.isRead)
-      throw new BadGatewayException('Сообщение уже прочитано!');
+      throw new WsException(
+        new BadGatewayException('Сообщение уже прочитано!'),
+      );
 
     const readingMessage = await this.messageService.readMessage(message.id);
 
     await this.server
       .to(socket.data.user.socketId)
       .emit('readMessage', readingMessage);
+  }
+
+  @UseGuards(WsGuard)
+  @SubscribeMessage('resendMessage')
+  async resendMessage(socket: Socket, dto: string) {
+    const id = JSON.parse(dto).id;
+    const roomId = JSON.parse(dto).roomId;
+
+    const message = await this.messageService.findById(id);
+
+    if (!message)
+      throw new WsException(new NotFoundException('Сообщение не найдено!'));
+
+    const room = await this.roomService.findById(roomId);
+    const resendingMessage = await this.blockMessagesService.resendMessage(
+      message,
+      room,
+    ); // Добавить DTO/Интерфейс
+
+    const connections: UserEntity[] = await this.roomService.getConnectedUsers(
+      room.users,
+    );
+    for (const user of connections) {
+      await this.server.to(user.socketId).emit('readMessage', resendingMessage);
+    }
   }
 }

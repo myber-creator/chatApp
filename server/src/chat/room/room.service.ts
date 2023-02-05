@@ -2,11 +2,12 @@ import { UserEntity } from 'src/user/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RoomEntity } from './room.entity';
-import { BadGatewayException, Injectable } from '@nestjs/common';
-import { RoomDto } from './room.dto';
+import { Injectable } from '@nestjs/common';
+import { RoomDto } from './dto/room.dto';
 import { UserService } from 'src/user/user.service';
 import { IUser } from 'src/types/User';
 import { IRoom } from 'src/types/Room';
+import { UnreadingMessagesService } from '../unreading-messages/unreading-messages.service';
 
 @Injectable()
 export class RoomService {
@@ -16,18 +17,58 @@ export class RoomService {
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     private userService: UserService,
+    private unreadingMessageService: UnreadingMessagesService,
   ) {}
 
-  async getRoomsForUser(id: number) {
-    const rooms = await this.roomRepository
+  async getRoomsForUser(user: UserEntity) {
+    const id = user.id;
+
+    const roomsFromDB = await this.roomRepository
       .createQueryBuilder('room')
       .leftJoin('room.users', 'users')
       .where('users.id = :id', { id })
       .leftJoinAndSelect('room.users', 'all_users')
+      .leftJoin('room.unreadingMessages', 'messages')
       .orderBy('room.update_at', 'DESC')
       .getMany();
 
+    const rooms = await Promise.all(
+      roomsFromDB.map(async (room) => {
+        const count = await this.unreadingMessageService.getCountForUserByRoom(
+          user,
+          room.id,
+        );
+
+        return {
+          ...room,
+          countUnreadingMessage: count,
+        };
+      }),
+    );
+
     return rooms;
+  }
+
+  async getBlocksByRoom(id: number) {
+    const { blocks } = await this.roomRepository.findOne({
+      where: {
+        id,
+      },
+      select: ['blocks'],
+      relations: {
+        blocks: {
+          messages: {
+            author: true,
+          },
+          notifies: true,
+        },
+      },
+      order: {
+        createdAt: 'ASC',
+      },
+    });
+
+    return blocks;
   }
 
   async createRoom(dto: RoomDto, creator: IUser) {
@@ -41,7 +82,7 @@ export class RoomService {
     const newRoom = await this.roomRepository.create({
       name: dto.name,
       users: [...users, creator],
-      messages: [],
+      blocks: [],
     });
 
     const room = await this.roomRepository.save(newRoom);
@@ -55,7 +96,7 @@ export class RoomService {
       select: ['users'],
       relations: {
         users: true,
-        messages: true,
+        blocks: true,
       },
     });
   }
@@ -88,9 +129,6 @@ export class RoomService {
   }
 
   async leaveFromRoom(room: IRoom, user: IUser) {
-    if (!room.users.find((u) => u.id === user.id))
-      throw new BadGatewayException('Пользователь не был подключён к беседе!');
-
     room.users = room.users.filter((u) => u.id != user.id);
 
     await this.roomRepository.save(room);

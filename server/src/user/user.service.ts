@@ -109,7 +109,7 @@ export class UserService {
       select: ['id', 'email', 'password', 'username', 'avatarPath', 'rooms'],
       relations: {
         rooms: {
-          messages: true,
+          blocks: true,
         },
       },
     });

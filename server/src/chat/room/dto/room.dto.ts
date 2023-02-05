@@ -1,4 +1,4 @@
-import { IUser } from './../../types/User';
+import { IUser } from '../../../types/User';
 import { ArrayMinSize, IsArray, IsString } from 'class-validator';
 
 export class RoomDto {
