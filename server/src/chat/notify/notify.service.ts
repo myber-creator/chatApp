@@ -31,4 +31,15 @@ export class NotifyService {
 
     return notify;
   }
+
+  getNotifyFields(notify: NotifyEntity) {
+    return {
+      id: notify.id,
+      body: notify.body,
+      author: notify.author,
+      afterMessage: notify.afterMessage.id,
+      createdAt: notify.createdAt,
+      updatedAt: notify.updatedAt,
+    };
+  }
 }

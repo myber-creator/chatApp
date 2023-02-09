@@ -95,10 +95,8 @@ export class UserService {
   }
 
   async setOnline(user: UserEntity, isOnline: boolean) {
-    if (user) {
-      user.isOnline = isOnline;
-      await this.userRepository.save(user);
-    }
+    user.isOnline = isOnline;
+    await this.userRepository.save(user);
   }
 
   async validateUser(dto: UserLoginDto) {
@@ -188,7 +186,6 @@ export class UserService {
       email: user.email,
       username: user.username,
       avatarPath: user.avatarPath,
-      rooms: user.rooms,
     };
   }
 }

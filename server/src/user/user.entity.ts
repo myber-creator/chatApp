@@ -33,4 +33,7 @@ export class UserEntity extends Base {
 
   @OneToMany(() => NotifyEntity, (notify) => notify.author)
   notifies: NotifyEntity[];
+
+  @OneToMany(() => MessageEntity, (message) => message.byUser)
+  resendingMessage: MessageEntity[];
 }

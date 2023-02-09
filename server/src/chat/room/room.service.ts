@@ -20,6 +20,7 @@ export class RoomService {
     private unreadingMessageService: UnreadingMessagesService,
   ) {}
 
+  // TODO: Прописать интрефейс.
   async getRoomsForUser(user: UserEntity) {
     const id = user.id;
 
@@ -39,8 +40,22 @@ export class RoomService {
           room.id,
         );
 
+        let privateRoom: RoomEntity;
+        if (room.type === 'PRIVATE') {
+          const interlocutor = room.users.find((u) => u.id !== user.id);
+
+          privateRoom = {
+            ...room,
+            users: [interlocutor],
+            name: interlocutor.username,
+            avatarPath: interlocutor.avatarPath,
+          };
+        }
+
+        const returnedRoom = privateRoom ? privateRoom : room;
+
         return {
-          ...room,
+          ...returnedRoom,
           countUnreadingMessage: count,
         };
       }),
@@ -59,8 +74,12 @@ export class RoomService {
         blocks: {
           messages: {
             author: true,
+            byUser: true,
           },
-          notifies: true,
+          notifies: {
+            afterMessage: true,
+            author: true,
+          },
         },
       },
       order: {
@@ -79,10 +98,15 @@ export class RoomService {
       users[index] = user;
     }
 
+    const roomName = dto.name
+      ? dto.name
+      : `${creator.username}, ` + users.map((u) => u.username).join(', ');
+
     const newRoom = await this.roomRepository.create({
-      name: dto.name,
+      name: roomName,
       users: [...users, creator],
       blocks: [],
+      type: dto.type,
     });
 
     const room = await this.roomRepository.save(newRoom);
@@ -114,7 +138,7 @@ export class RoomService {
   }
 
   async getConnectedUsers(users: IUser[]) {
-    const connection = users.reduce(async (array, u) => {
+    const connection: UserEntity[] = await users.reduce(async (array, u) => {
       const user = await this.userService.getSocketById(u.id);
       const arr = await array;
 
@@ -134,5 +158,9 @@ export class RoomService {
     await this.roomRepository.save(room);
 
     return room.users;
+  }
+
+  async deleteRoom(room: RoomEntity) {
+    await this.roomRepository.remove(room);
   }
 }

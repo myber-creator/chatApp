@@ -1,3 +1,4 @@
+import { UserEntity } from 'src/user/user.entity';
 import { BlockMessagesEntity } from './../block-messages/block-messages.entity';
 import { MessageEntity } from './message.entity';
 import { Injectable } from '@nestjs/common';
@@ -64,13 +65,18 @@ export class MessageService {
     };
   }
 
-  async resendMessage(oldMessage: MessageEntity, block: BlockMessagesEntity) {
+  async resendMessage(
+    oldMessage: MessageEntity,
+    block: BlockMessagesEntity,
+    user: UserEntity,
+  ) {
     const newMessage = await this.messageRepository.create({
       createdAt: oldMessage.createdAt,
       body: oldMessage.body,
       isEdit: oldMessage.isEdit,
       editedAt: oldMessage.editedAt,
-      author: oldMessage.author,
+      byUser: oldMessage.author,
+      author: user,
       isResended: true,
       block,
     });
@@ -89,11 +95,12 @@ export class MessageService {
       body: message.body,
       createdAt: message.createdAt,
       block: message.block.id,
-      author: message.author.id,
+      author: message.author,
       isEdit: message.isEdit,
       editedAt: message.editedAt,
       isRead: message.isRead,
       isResended: message.isResended,
+      byUser: message.byUser,
     };
   }
 }

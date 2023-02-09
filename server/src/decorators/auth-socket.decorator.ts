@@ -1,5 +1,10 @@
 import { JwtService } from '@nestjs/jwt';
-import { Injectable, CanActivate, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { WsException } from '@nestjs/websockets';
 
@@ -18,11 +23,11 @@ export class WsGuard implements CanActivate {
       const user = await this.userService.findById(decoded.id);
 
       if (!user) {
-        throw new WsException(new UnauthorizedException());
+        throw new WsException(new NotFoundException());
       }
 
       return true;
-    } catch (err) {
+    } catch {
       throw new WsException(new UnauthorizedException());
     }
   }
