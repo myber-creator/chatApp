@@ -8,7 +8,7 @@ import '@/assets/transitions.css'
 import styles from './ChatRoomSidebar.module.css'
 
 interface Props {
-  room: IRoom
+  room: IRoom | undefined
 }
 
 const props = defineProps<Props>()
