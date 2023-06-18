@@ -37,7 +37,7 @@ export class NotifyService {
       id: notify.id,
       body: notify.body,
       author: notify.author,
-      afterMessage: notify.afterMessage.id,
+      afterMessage: notify.afterMessage?.id || null,
       createdAt: notify.createdAt,
       updatedAt: notify.updatedAt,
     };

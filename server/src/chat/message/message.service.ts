@@ -1,11 +1,13 @@
+import { RoomEntity } from './../room/room.entity';
 import { UserEntity } from 'src/user/user.entity';
 import { BlockMessagesEntity } from './../block-messages/block-messages.entity';
 import { MessageEntity } from './message.entity';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IUser } from 'src/types/User';
 import { UnreadingMessagesService } from '../unreading-messages/unreading-messages.service';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class MessageService {
@@ -15,11 +17,19 @@ export class MessageService {
     private unreadingMessageService: UnreadingMessagesService,
   ) {}
 
-  async createMessage(body: string, user: IUser, block: BlockMessagesEntity) {
+  async createMessage(
+    body: string,
+    user: IUser,
+    block: BlockMessagesEntity,
+    room: RoomEntity,
+  ) {
+    const usersExpectMe = room.users.filter((u) => u.id !== user.id);
+
     const newMessage = await this.messageRepository.create({
       author: user,
       body,
       block,
+      isNotRead: [...usersExpectMe],
     });
 
     const message = await this.messageRepository.save(newMessage);
@@ -33,8 +43,13 @@ export class MessageService {
     return await this.messageRepository.findOne({
       where: { id },
       relations: {
-        block: true,
+        block: {
+          room: {
+            users: true,
+          },
+        },
         author: true,
+        isNotRead: true,
       },
     });
   }
@@ -54,22 +69,32 @@ export class MessageService {
     });
   }
 
-  async readMessage(id: number) {
-    const message = await this.messageRepository.save({ id, isRead: true });
+  async readMessage(id: number, user: UserEntity) {
+    const readMessage = await this.findById(id);
 
-    await this.unreadingMessageService.deleteMessage(id);
+    if (!readMessage)
+      throw new WsException(new NotFoundException('Сообщение не найдено!'));
 
-    return {
-      id: message.id,
-      isRead: message.isRead,
-    };
+    readMessage.isNotRead = readMessage.isNotRead.filter(
+      (u) => u.id !== user.id,
+    );
+
+    const message = await this.messageRepository.save(readMessage);
+
+    if (message.isNotRead.length === 0)
+      await this.unreadingMessageService.deleteMessage(message.id);
+
+    return message;
   }
 
   async resendMessage(
     oldMessage: MessageEntity,
     block: BlockMessagesEntity,
     user: UserEntity,
+    room: RoomEntity,
   ) {
+    const usersExpectMe = room.users.filter((u) => u.id !== user.id);
+
     const newMessage = await this.messageRepository.create({
       createdAt: oldMessage.createdAt,
       body: oldMessage.body,
@@ -78,6 +103,7 @@ export class MessageService {
       byUser: oldMessage.author,
       author: user,
       isResended: true,
+      isNotRead: [...usersExpectMe],
       block,
     });
 
@@ -86,6 +112,26 @@ export class MessageService {
     await this.unreadingMessageService.createUnreadMessage(message, block.room);
 
     return message;
+  }
+
+  async getLastMessage(id: number) {
+    const lastMessage = await this.messageRepository.findOne({
+      where: {
+        block: {
+          room: {
+            id,
+          },
+        },
+      },
+      relations: {
+        author: true,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+
+    return lastMessage;
   }
 
   // TODO: Переписать объект. Развернуть message и перезаписать поля(?)
@@ -98,7 +144,7 @@ export class MessageService {
       author: message.author,
       isEdit: message.isEdit,
       editedAt: message.editedAt,
-      isRead: message.isRead,
+      isNotRead: message.isNotRead,
       isResended: message.isResended,
       byUser: message.byUser,
     };

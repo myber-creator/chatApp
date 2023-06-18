@@ -4,6 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { getTypeOrmConfig } from './config/typeorm.config';
 import { UserModule } from './user/user.module';
 import { ChatModule } from './chat/chat.module';
+import { FileModule } from './file/file.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -14,6 +17,10 @@ import { ChatModule } from './chat/chat.module';
     }),
     UserModule,
     ChatModule,
+    FileModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, 'static'),
+    }),
   ],
 })
 export class AppModule {}

@@ -4,7 +4,7 @@ import { MessageEntity } from './../message/message.entity';
 import { UnreadingMessagesEntity } from './unreading-messages.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { Not, Repository, MoreThan, LessThan } from 'typeorm';
 
 @Injectable()
 export class UnreadingMessagesService {
@@ -34,6 +34,34 @@ export class UnreadingMessagesService {
     });
   }
 
+  async findMessagesBefore(
+    id: number,
+    user: UserEntity,
+    message: MessageEntity,
+  ) {
+    return await this.unreadMessageRepository.find({
+      where: {
+        message: {
+          createdAt: LessThan(message.createdAt),
+          isNotRead: {
+            id: user.id,
+          },
+        },
+        room: {
+          id,
+        },
+      },
+      relations: {
+        message: true,
+      },
+      order: {
+        message: {
+          createdAt: 'ASC',
+        },
+      },
+    });
+  }
+
   async getCountForUserByRoom(user: UserEntity, roomId: number) {
     return await this.unreadMessageRepository.count({
       where: {
@@ -41,6 +69,9 @@ export class UnreadingMessagesService {
         message: {
           author: {
             id: Not(user.id),
+          },
+          isNotRead: {
+            id: user.id,
           },
         },
       },

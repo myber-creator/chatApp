@@ -1,3 +1,4 @@
+import { FileEntity } from './../file/file.entity';
 import { BlockMessagesEntity } from './block-messages/block-messages.entity';
 import { UserEntity } from 'src/user/user.entity';
 import { JwtModule } from '@nestjs/jwt';
@@ -45,6 +46,7 @@ import { NotifyService } from './notify/notify.service';
       BlockMessagesEntity,
       NotifyEntity,
       UnreadingMessagesEntity,
+      FileEntity,
     ]),
   ],
 })

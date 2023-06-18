@@ -1,0 +1,5 @@
+.sidebar {
+  @apply pt-8 pb-4 text-white bg-secondary h-screen grid border-r-2 border-primary;
+
+  grid-template-rows: auto 1fr auto;
+}

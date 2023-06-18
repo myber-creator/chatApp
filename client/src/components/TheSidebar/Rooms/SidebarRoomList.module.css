@@ -1,0 +1,7 @@
+.main {
+  @apply mt-8 overflow-y-auto flex flex-col gap-4;
+}
+
+.main::-webkit-scrollbar {
+  @apply hidden;
+}

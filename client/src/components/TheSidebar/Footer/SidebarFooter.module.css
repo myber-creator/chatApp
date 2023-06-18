@@ -1,0 +1,31 @@
+.footer {
+  @apply px-5 flex items-center justify-between pt-4;
+}
+
+.avatar {
+  @apply w-[50px] h-[50px];
+}
+
+.user {
+  @apply flex gap-3;
+}
+
+.nickname > * {
+  @apply font-bold max-w-[200px] whitespace-nowrap overflow-hidden text-ellipsis;
+}
+
+.settings {
+  @apply cursor-pointer flex items-center select-none;
+}
+
+.avatar {
+  @apply rounded-full;
+}
+
+.avatarBlock {
+  @apply w-[50px] h-[50px] shrink-0 flex items-center justify-center rounded-full font-bold;
+}
+
+.form {
+  @apply text-white flex flex-col gap-4;
+}

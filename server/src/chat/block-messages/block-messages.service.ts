@@ -32,6 +32,7 @@ export class BlockMessagesService {
     });
 
     const block = await this.blockMessagesRepository.save(newBlock);
+    room.blocks.push(block);
 
     return block;
   }
@@ -57,13 +58,18 @@ export class BlockMessagesService {
   async createMessage(body: string, user: UserEntity, room: RoomEntity) {
     const { block, isNewBlock } = await this.checkExistBlock(room);
 
-    const message = await this.messageService.createMessage(body, user, block);
+    const message = await this.messageService.createMessage(
+      body,
+      user,
+      block,
+      room,
+    );
 
     block.messages.push(message);
 
     return {
       idRoom: room.id,
-      block: isNewBlock ? this.getBlockFields(block) : undefined,
+      block: isNewBlock ? block : undefined,
       message: this.messageService.getMessageFileds(message),
     };
   }
@@ -79,6 +85,7 @@ export class BlockMessagesService {
       message,
       block,
       user,
+      room,
     );
 
     block.messages.push(resendingMessage);
@@ -176,6 +183,8 @@ export class BlockMessagesService {
       message,
       block,
     );
+
+    console.log(notify);
 
     return {
       ...this.notifyService.getNotifyFields(notify),

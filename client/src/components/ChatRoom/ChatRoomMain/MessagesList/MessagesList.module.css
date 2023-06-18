@@ -1,0 +1,7 @@
+.wrapper {
+  @apply overflow-y-auto px-10 py-4;
+}
+
+.empty {
+  @apply text-slate-500 text-lg text-center;
+}

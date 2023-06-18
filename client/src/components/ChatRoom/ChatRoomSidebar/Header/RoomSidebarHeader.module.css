@@ -1,0 +1,23 @@
+.header {
+  @apply flex flex-col px-5 mb-8;
+}
+
+.avatar {
+  @apply w-20 h-20 self-center mb-3;
+}
+
+.content {
+  @apply flex items-center justify-between;
+}
+
+.name {
+  @apply max-w-[150px] text-ellipsis overflow-hidden whitespace-nowrap font-bold;
+}
+
+.icon {
+  @apply select-none;
+}
+
+.form {
+  @apply text-white flex flex-col gap-4;
+}

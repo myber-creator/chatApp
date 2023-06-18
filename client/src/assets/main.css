@@ -1,0 +1,21 @@
+@import './base.css';
+
+#app {
+  @apply bg-primary min-h-screen text-white;
+}
+
+*::-webkit-scrollbar {
+  @apply w-1;
+}
+
+*::-webkit-scrollbar-track {
+  @apply bg-primary;
+}
+
+*::-webkit-scrollbar-thumb {
+  @apply bg-secondary rounded-full;
+}
+
+#modals {
+  @apply flex;
+}

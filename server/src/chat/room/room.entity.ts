@@ -24,4 +24,7 @@ export class RoomEntity extends Base {
 
   @OneToMany(() => UnreadingMessagesEntity, (message) => message.room)
   unreadingMessages: UnreadingMessagesEntity[];
+
+  @Column({ default: false })
+  isUpdated: boolean;
 }

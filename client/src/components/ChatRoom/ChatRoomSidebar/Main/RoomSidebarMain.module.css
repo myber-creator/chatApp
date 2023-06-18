@@ -1,0 +1,31 @@
+.main {
+  @apply flex flex-col gap-3;
+}
+
+.head {
+  @apply px-5 flex flex-col gap-3;
+}
+
+.members {
+  @apply flex items-center justify-between;
+}
+
+.title {
+  @apply font-bold text-lg;
+}
+
+.icon {
+  @apply cursor-pointer;
+}
+
+.users {
+  @apply text-white mt-4;
+}
+
+.button {
+  @apply bg-slate-500 hover:bg-slate-600 transition-colors duration-200 gap-1 mb-1;
+}
+
+.loader {
+  @apply w-full flex items-start justify-center;
+}

@@ -1,0 +1,27 @@
+.header {
+  @apply px-5;
+}
+
+.title {
+  @apply font-bold mb-4 text-2xl;
+}
+
+.search {
+  @apply bg-primary px-3 py-2 rounded flex gap-1 items-center text-slate-400 select-none;
+}
+
+.button {
+  @apply bg-slate-500 hover:bg-slate-600 mt-6;
+}
+
+.input {
+  @apply bg-transparent outline-none;
+}
+
+.form {
+  @apply flex flex-col text-white gap-4;
+}
+
+.users {
+  @apply max-h-[200px];
+}

@@ -34,7 +34,7 @@ export class UserService {
       email: dto.email,
       password: await hash(dto.password, salt),
       username: dto.username,
-      avatarPath: dto.avatarPath,
+      avatarPath: dto.avatarPath || '',
       rooms: [],
     });
 
@@ -54,7 +54,7 @@ export class UserService {
     const user = await this.validateUser(dto);
     const tokens = await this.issuePairTokens(user.id);
 
-    res.cookie('token', tokens.refreshToken, { httpOnly: true });
+    res.cookie('token', tokens.refreshToken, { httpOnly: true, secure: false });
 
     return {
       user: this.getUserFields(user),
@@ -65,6 +65,15 @@ export class UserService {
   async findAllByUsername(username: string) {
     return await this.userRepository.find({
       where: { username: Like(`%${username.toLowerCase()}%`) },
+    });
+  }
+
+  async findAllOnline() {
+    return await this.userRepository.find({
+      where: {
+        socketId: Not(IsNull()),
+      },
+      select: ['socketId'],
     });
   }
 
@@ -126,7 +135,7 @@ export class UserService {
     const data = { id: userId };
 
     const refreshToken = await this.jwtService.signAsync(data, {
-      expiresIn: '15d',
+      expiresIn: '30d',
     });
 
     const accessToken = await this.jwtService.signAsync(data, {
@@ -141,7 +150,7 @@ export class UserService {
 
   async getNewTokens({ refreshToken }: RefreshTokenDto) {
     if (!refreshToken)
-      throw new UnauthorizedException('Пользователь не авторизован!');
+      throw new BadRequestException('Пользователь не авторизован!');
 
     const result = await this.jwtService.verifyAsync(refreshToken);
 
@@ -162,22 +171,66 @@ export class UserService {
     };
   }
 
-  async getAnotherUsers(id: number) {
-    const usersInRoom = await this.userRepository.find({
-      where: {
-        rooms: {
-          id,
+  async getAnotherUsers(ownerId: number, id?: number, skip = 0, take = 10) {
+    const ids = [];
+
+    if (id) {
+      const usersInRoom = await this.userRepository.find({
+        where: {
+          rooms: {
+            id,
+          },
         },
+      });
+
+      ids.push(...usersInRoom.map((u) => u.id));
+    }
+
+    const owner = await this.userRepository.findOne({
+      where: {
+        id: ownerId,
       },
     });
 
+    if (owner) {
+      ids.push(owner.id);
+    }
+
     const users = await this.userRepository.find({
       where: {
-        id: Not(In(usersInRoom.map((u) => u.id))),
+        id: Not(In(ids)),
+      },
+      order: {
+        updatedAt: 'DESC',
       },
     });
 
     return users;
+  }
+
+  async getUser(token: string) {
+    try {
+      const result = await this.jwtService.verifyAsync(token);
+
+      if (!result) throw new UnauthorizedException('Токен не верный!');
+
+      const user = await this.userRepository.findOne({
+        where: { id: result.id },
+        select: ['id', 'email', 'username', 'avatarPath'],
+      });
+
+      return user;
+    } catch (error: any) {
+      throw new UnauthorizedException('Токен не верный!');
+    }
+  }
+
+  async editUser(id: number, username: string, avatarPath: string) {
+    return await this.userRepository.save({
+      id,
+      username,
+      avatarPath,
+    });
   }
 
   getUserFields(user: UserEntity) {

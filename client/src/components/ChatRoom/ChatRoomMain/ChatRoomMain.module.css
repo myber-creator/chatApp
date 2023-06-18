@@ -1,0 +1,9 @@
+.main {
+  @apply grid h-screen;
+
+  grid-template-rows: 1fr minmax(0, 72px);
+}
+
+.scroll {
+  @apply overflow-y-auto flex flex-col justify-end;
+}

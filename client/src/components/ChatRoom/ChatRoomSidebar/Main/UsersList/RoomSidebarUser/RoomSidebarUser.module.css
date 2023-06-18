@@ -1,0 +1,19 @@
+.user {
+  @apply flex items-center gap-2 px-5 py-2;
+}
+
+.avatar {
+  @apply relative;
+}
+
+.avatar__img {
+  @apply w-10 h-10;
+}
+
+.online {
+  @apply bg-emerald-500 w-3 h-3 rounded-full absolute bottom-0 right-1 border-2 border-secondary;
+}
+
+.username {
+  @apply font-bold;
+}

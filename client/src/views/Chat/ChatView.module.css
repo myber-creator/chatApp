@@ -1,0 +1,5 @@
+.wrapper {
+  @apply grid;
+
+  grid-template-columns: minmax(0, 314px) 1fr;
+}

@@ -1,0 +1,54 @@
+.room {
+  @apply flex  gap-3 hover:bg-slate-700 cursor-pointer transition-colors duration-200 px-5 py-2 rounded;
+}
+
+.active {
+  @apply bg-slate-700;
+}
+
+.avatar {
+  @apply w-[50px] h-[50px];
+}
+
+.info {
+  @apply grid items-center w-full gap-x-5;
+
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr auto;
+}
+
+.message__body {
+  @apply overflow-hidden text-ellipsis whitespace-nowrap;
+}
+
+.name {
+  @apply font-bold self-start max-w-[130px] overflow-hidden text-ellipsis whitespace-nowrap;
+}
+
+.time {
+  @apply justify-end text-sm flex;
+}
+
+.message {
+  @apply max-w-[130px] overflow-hidden text-ellipsis whitespace-nowrap;
+}
+
+.count {
+  @apply flex justify-end;
+}
+
+.number {
+  @apply bg-slate-600 px-2 rounded-full text-sm;
+}
+
+.empty {
+  @apply text-slate-500;
+}
+
+.message__info {
+  @apply flex gap-1;
+}
+
+.nickname {
+  @apply text-violet-300;
+}

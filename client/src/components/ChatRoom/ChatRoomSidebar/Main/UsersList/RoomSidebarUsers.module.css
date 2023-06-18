@@ -1,0 +1,12 @@
+.wrapper {
+  @apply overflow-y-auto;
+  max-height: calc(100vh - 2rem - 296px);
+}
+
+.list {
+  @apply flex flex-col gap-2;
+}
+
+.wrapper::-webkit-scrollbar {
+  @apply hidden;
+}

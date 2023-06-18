@@ -1,0 +1,19 @@
+.wrapper {
+  @apply text-white max-h-[350px];
+}
+
+.wrapper__inner {
+  @apply overflow-y-auto flex flex-col gap-2 flex-grow-0 max-h-[300px];
+}
+
+.wrapper__inner::-webkit-scrollbar-track {
+  @apply bg-secondary;
+}
+
+.wrapper__inner::-webkit-scrollbar-thumb {
+  @apply bg-primary;
+}
+
+.button {
+  @apply bg-blue-500 hover:bg-blue-600 transition-colors duration-200 mt-4;
+}

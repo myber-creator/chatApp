@@ -1,0 +1,29 @@
+.wrapper {
+  @apply bg-secondary flex items-center justify-center px-10 border-t-2 border-primary;
+}
+
+.field {
+  @apply bg-primary px-4 py-2 rounded-full w-full flex items-center relative;
+}
+
+.input {
+  @apply bg-transparent outline-none w-full resize-none max-h-[50px] overflow-y-auto;
+
+  word-wrap: break-word;
+}
+
+.input::-webkit-scrollbar {
+  @apply hidden;
+}
+
+.placeholder {
+  @apply absolute text-gray-400;
+}
+
+.buttons {
+  @apply flex gap-1;
+}
+
+.send {
+  @apply cursor-pointer select-none;
+}

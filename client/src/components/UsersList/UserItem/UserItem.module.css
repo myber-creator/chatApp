@@ -1,0 +1,11 @@
+.user {
+  @apply flex items-center gap-4 cursor-pointer hover:bg-slate-700 transition-colors duration-200 px-4 py-2 rounded;
+}
+
+.button {
+  @apply cursor-pointer;
+}
+
+.avatar {
+  @apply flex shrink-0 h-12 w-12;
+}

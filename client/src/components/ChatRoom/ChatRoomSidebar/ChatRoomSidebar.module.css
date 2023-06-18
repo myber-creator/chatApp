@@ -1,0 +1,5 @@
+.sidebar {
+  @apply bg-secondary border-l-2 border-primary py-8 h-screen grid;
+
+  grid-template-rows: auto 1fr;
+}

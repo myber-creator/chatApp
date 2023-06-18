@@ -1,0 +1,3 @@
+.button {
+  @apply w-full uppercase font-bold rounded transition-colors duration-200 py-2 flex items-center justify-center;
+}

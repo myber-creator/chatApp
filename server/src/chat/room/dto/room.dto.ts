@@ -1,5 +1,4 @@
 import { RoomType } from 'src/types/RoomType';
-import { IUser } from '../../../types/User';
 import { ArrayMinSize, IsArray, IsNotEmpty, IsString } from 'class-validator';
 
 export class RoomDto {
@@ -8,7 +7,7 @@ export class RoomDto {
 
   @IsArray()
   @ArrayMinSize(1)
-  users: IUser[];
+  users: number[];
 
   @IsString()
   @IsNotEmpty()

@@ -1,0 +1,11 @@
+.wrapper {
+  @apply mt-5 flex flex-col gap-4;
+}
+
+.date {
+  @apply bg-secondary flex max-w-fit px-4 py-1 rounded-full self-center text-sm;
+}
+
+.messages {
+  @apply flex flex-col gap-4;
+}

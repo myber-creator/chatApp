@@ -1,0 +1,15 @@
+.wrapper {
+  @apply flex justify-center items-center h-screen;
+}
+
+.form {
+  @apply bg-secondary rounded-md shadow-md px-5 py-3 flex flex-col gap-4 text-white max-w-md w-full;
+}
+
+.additional {
+  @apply flex items-center justify-center gap-2;
+}
+
+.link {
+  @apply font-bold cursor-pointer;
+}

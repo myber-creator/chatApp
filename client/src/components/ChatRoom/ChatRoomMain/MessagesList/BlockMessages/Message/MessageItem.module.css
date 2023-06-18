@@ -1,0 +1,58 @@
+.wrapper {
+  @apply flex gap-5 flex-col;
+}
+.item {
+  @apply flex gap-2;
+}
+
+.avatar {
+  @apply w-[50px] h-[50px];
+}
+
+.unread__notify {
+  @apply flex self-center w-full bg-secondary px-4 py-1 rounded-full justify-center;
+}
+
+.username {
+  @apply font-bold mb-1;
+}
+
+.message__wrapper {
+  @apply flex;
+}
+
+.message__wrapper:hover .menu {
+  @apply opacity-100;
+}
+
+.body {
+  @apply px-3 py-1 rounded-lg flex-shrink-0 flex gap-2 max-w-[450px] whitespace-pre-line;
+
+  border-top-left-radius: 0;
+}
+
+.text {
+  @apply mb-1;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.options {
+  @apply self-end flex gap-1 items-center;
+}
+
+.edit {
+  @apply text-slate-300 text-xs;
+}
+
+.time {
+  @apply text-xs text-slate-300;
+}
+
+.check {
+  @apply text-base text-slate-300;
+}
+
+.menu {
+  @apply self-center opacity-0 transition-opacity duration-200;
+}

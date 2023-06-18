@@ -36,4 +36,7 @@ export class UserEntity extends Base {
 
   @OneToMany(() => MessageEntity, (message) => message.byUser)
   resendingMessage: MessageEntity[];
+
+  @ManyToMany(() => MessageEntity, (message) => message.isNotRead)
+  isReadMessages: MessageEntity[];
 }

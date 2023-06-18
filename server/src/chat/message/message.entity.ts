@@ -1,3 +1,4 @@
+import { FileEntity } from './../../file/file.entity';
 import { UnreadingMessagesEntity } from './../unreading-messages/unreading-messages.entity';
 import { BlockMessagesEntity } from './../block-messages/block-messages.entity';
 import { NotifyEntity } from './../notify/notify.entity';
@@ -8,26 +9,29 @@ import {
   Column,
   OneToOne,
   JoinColumn,
+  ManyToMany,
+  JoinTable,
   OneToMany,
 } from 'typeorm';
 import { Base } from '../../utils/base';
 
 @Entity('Message')
 export class MessageEntity extends Base {
-  @Column()
-  body: string;
+  @Column({ default: '' })
+  body?: string;
 
   @Column({ default: false })
   isEdit: boolean;
-
-  @Column({ default: false })
-  isRead: boolean;
 
   @Column({ nullable: true })
   editedAt?: Date;
 
   @Column({ default: false })
   isResended: boolean;
+
+  @ManyToMany(() => UserEntity, (user) => user.isReadMessages)
+  @JoinTable()
+  isNotRead: UserEntity[];
 
   @ManyToOne(() => UserEntity, (user) => user.messages)
   @JoinColumn()
@@ -47,4 +51,8 @@ export class MessageEntity extends Base {
   @ManyToOne(() => UserEntity, (user) => user.resendingMessage)
   @JoinColumn()
   byUser?: UserEntity;
+
+  @OneToMany(() => FileEntity, (file) => file.message)
+  @JoinColumn()
+  files?: FileEntity[];
 }

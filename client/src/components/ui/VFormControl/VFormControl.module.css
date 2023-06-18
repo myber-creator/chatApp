@@ -1,0 +1,19 @@
+.title {
+  @apply mb-1;
+}
+
+.wrapper {
+  @apply relative;
+}
+
+.input {
+  @apply w-full bg-primary px-2 py-1 rounded focus:outline-1 border border-slate-500;
+}
+
+.visibility {
+  @apply absolute right-2 top-1/2 cursor-pointer -translate-y-1/2 select-none;
+}
+
+.upload {
+  @apply bg-slate-700;
+}

@@ -1,6 +1,7 @@
+import { BlockMessagesEntity } from './../block-messages/block-messages.entity';
 import { UserEntity } from 'src/user/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, Not, Repository } from 'typeorm';
 import { RoomEntity } from './room.entity';
 import { Injectable } from '@nestjs/common';
 import { RoomDto } from './dto/room.dto';
@@ -8,6 +9,8 @@ import { UserService } from 'src/user/user.service';
 import { IUser } from 'src/types/User';
 import { IRoom } from 'src/types/Room';
 import { UnreadingMessagesService } from '../unreading-messages/unreading-messages.service';
+import { MessageEntity } from '../message/message.entity';
+import { MessageService } from '../message/message.service';
 
 @Injectable()
 export class RoomService {
@@ -16,8 +19,13 @@ export class RoomService {
     private readonly roomRepository: Repository<RoomEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(BlockMessagesEntity)
+    private readonly blockRepository: Repository<BlockMessagesEntity>,
+    @InjectRepository(MessageEntity)
+    private readonly messageRepository: Repository<MessageEntity>,
     private userService: UserService,
     private unreadingMessageService: UnreadingMessagesService,
+    private messageService: MessageService,
   ) {}
 
   // TODO: Прописать интрефейс.
@@ -29,6 +37,7 @@ export class RoomService {
       .leftJoin('room.users', 'users')
       .where('users.id = :id', { id })
       .leftJoinAndSelect('room.users', 'all_users')
+      .orderBy('users.username', 'DESC')
       .leftJoin('room.unreadingMessages', 'messages')
       .orderBy('room.update_at', 'DESC')
       .getMany();
@@ -54,8 +63,11 @@ export class RoomService {
 
         const returnedRoom = privateRoom ? privateRoom : room;
 
+        const lastMessage = await this.messageService.getLastMessage(room.id);
+
         return {
           ...returnedRoom,
+          lastMessage,
           countUnreadingMessage: count,
         };
       }),
@@ -64,26 +76,90 @@ export class RoomService {
     return rooms;
   }
 
-  async getBlocksByRoom(id: number) {
-    const { blocks } = await this.roomRepository.findOne({
-      where: {
-        id,
-      },
-      select: ['blocks'],
-      relations: {
-        blocks: {
+  async getBlocksByRoom(id: number, user: UserEntity, skip = 0, take = 2) {
+    if (!skip) {
+      const blockWithFirstUnread = await this.blockRepository.findOne({
+        where: {
+          messages: {
+            author: {
+              id: Not(user.id),
+            },
+            isNotRead: {
+              id: user.id,
+            },
+          },
+          room: {
+            id,
+          },
+        },
+        relations: {
           messages: {
             author: true,
             byUser: true,
+            isNotRead: true,
           },
           notifies: {
             afterMessage: true,
             author: true,
           },
+          room: true,
         },
+        order: {
+          date: 'ASC',
+        },
+      });
+
+      if (blockWithFirstUnread) {
+        const blocksWithUnread = await this.blockRepository.findAndCount({
+          where: {
+            room: { id },
+            date: LessThanOrEqual(blockWithFirstUnread.date),
+          },
+          relations: {
+            messages: {
+              author: true,
+              byUser: true,
+              isNotRead: true,
+            },
+            notifies: {
+              afterMessage: true,
+              author: true,
+            },
+            room: true,
+          },
+          order: {
+            date: 'ASC',
+            messages: {
+              createdAt: 'ASC',
+            },
+          },
+        });
+
+        return [...blocksWithUnread, blockWithFirstUnread.messages[0]];
+      }
+    }
+
+    const blocks = await this.blockRepository.findAndCount({
+      where: {
+        room: { id },
+      },
+      relations: {
+        messages: {
+          author: true,
+          byUser: true,
+          isNotRead: true,
+        },
+        notifies: {
+          afterMessage: true,
+          author: true,
+        },
+        room: true,
       },
       order: {
-        createdAt: 'ASC',
+        date: 'ASC',
+        messages: {
+          createdAt: 'ASC',
+        },
       },
     });
 
@@ -91,10 +167,10 @@ export class RoomService {
   }
 
   async createRoom(dto: RoomDto, creator: IUser) {
-    const users = [];
+    const users: UserEntity[] = [];
 
     for (let index = 0; index < dto.users.length; index++) {
-      const user = await this.userService.findById(dto.users[index].id);
+      const user = await this.userService.findById(dto.users[index]);
       users[index] = user;
     }
 
@@ -125,9 +201,9 @@ export class RoomService {
     });
   }
 
-  async addUser(room: IRoom, user: IUser) {
+  async addUser(room: IRoom, user: number) {
     const candidate = await this.userRepository.findOne({
-      where: { id: user.id },
+      where: { id: user },
     });
 
     if (!room.users.includes(candidate)) room.users.push(candidate);
@@ -162,5 +238,18 @@ export class RoomService {
 
   async deleteRoom(room: RoomEntity) {
     await this.roomRepository.remove(room);
+  }
+
+  async updateRoomUpdatedAt(room: RoomEntity) {
+    await this.roomRepository.save(room);
+  }
+
+  async editRoom(id: number, name: string, avatarPath: string) {
+    return await this.roomRepository.save({
+      id,
+      name,
+      avatarPath,
+      isUpdated: true,
+    });
   }
 }

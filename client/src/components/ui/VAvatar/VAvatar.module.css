@@ -1,0 +1,7 @@
+.avatar {
+  @apply rounded-full;
+}
+
+.avatarBlock {
+  @apply flex-1 flex items-center justify-center rounded-full font-bold;
+}
