@@ -27,7 +27,15 @@ export class Auth {
           if (this.paths.includes(to.path)) return next()
 
           if (error.value.statusCode === 401) {
-            return next('/signin')
+            await getUser()
+
+            if (error.value.statusCode === 401) {
+              return next('/signin')
+            } else {
+              if (this.paths.includes(to.path)) return next('/chat')
+
+              return next()
+            }
           }
 
           return next(false)
