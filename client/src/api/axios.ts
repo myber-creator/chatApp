@@ -2,7 +2,7 @@ import axios from 'axios'
 import type { ISignInUpDto } from './dto/Sign_In.dto'
 
 export const api = axios.create({
-  baseURL: 'https://server-chi-navy.vercel.app/api/',
+  baseURL: 'https://chatapp-production-191e.up.railway.app/api/',
   withCredentials: true
 })
 

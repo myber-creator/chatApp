@@ -37,7 +37,7 @@ export class Socket {
   private socket: ISocket
   private lastEmit: { name: string; data?: any }
 
-  constructor(url: string = 'https://server-chi-navy.vercel.app/') {
+  constructor(url: string = 'https://chatapp-production-191e.up.railway.app') {
     this.socket = io(url, {
       auth: { token: localStorage.getItem('token') || '' }
     })
