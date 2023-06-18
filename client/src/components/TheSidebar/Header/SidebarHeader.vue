@@ -100,7 +100,9 @@ const submit = () => {
                 :type="form.Type.value"
               ></UsersList>
               <template #fallback>
-                <VLoader />
+                <div class="flex items-center justify-center">
+                  <VLoader />
+                </div>
               </template>
             </Suspense>
           </template>
