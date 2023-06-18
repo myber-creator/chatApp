@@ -2,7 +2,7 @@ import axios from 'axios'
 import type { ISignInUpDto } from './dto/Sign_In.dto'
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3000/api/',
+  baseURL: 'https://server-chi-navy.vercel.app/api/',
   withCredentials: true
 })
 
