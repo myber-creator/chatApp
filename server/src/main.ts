@@ -10,7 +10,7 @@ async function bootstrap() {
 
   app.enableCors({
     credentials: true,
-    origin: 'http://localhost:5173',
+    origin: 'https://client-eight-zeta.vercel.app',
   });
   app.setGlobalPrefix('api');
   app.use(cookieParser());
