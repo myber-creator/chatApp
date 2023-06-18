@@ -14,7 +14,7 @@ export class FileService {
       }
 
       fs.writeFileSync(path.join(filepath, filename), file.buffer);
-      return `http://localhost:3000/${category}/${filename}`;
+      return `https://chatapp-production-191e.up.railway.app/${category}/${filename}`;
     } catch {
       throw new BadRequestException('Во время записи файла возникла ошибка!');
     }
