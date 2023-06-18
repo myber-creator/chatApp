@@ -29,7 +29,7 @@ import { WsGuard } from 'src/decorators/auth-socket.decorator';
       'https://hoppscotch.io',
       'http://localhost:5173',
       'http://localhost:4200',
-      'https://client-lk07p768d-myber-creator.vercel.app',
+      'https://client-eight-zeta.vercel.app',
     ],
   },
 })
