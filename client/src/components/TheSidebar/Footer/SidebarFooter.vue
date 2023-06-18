@@ -2,7 +2,7 @@
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { inject, watch } from 'vue'
+import { inject, ref, watch } from 'vue'
 import { useModal } from '@/hooks/useModal'
 import { minlength } from '@/helpers/validators'
 import { useForm } from '@/hooks/useForm'
@@ -84,8 +84,11 @@ const form = useForm([
 ])
 
 const socket = inject('socket') as Socket
+const isLoading = ref(false)
 const submit = () => {
   if (!user.value) return
+
+  if (isLoading.value) return
 
   const dto: UserEditDto = {
     id: user.value.id,
@@ -130,6 +133,8 @@ const submit = () => {
           :class="styles.form"
           @submit.prevent="submit"
           @update_form="(key: string, val: string | number) => form[key].value = val"
+          :isLoading="isLoading"
+          @update_loading="(val: boolean) => (isLoading = val)"
           type="avatar"
         ></VForm>
       </VModal>
