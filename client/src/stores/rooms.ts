@@ -107,7 +107,11 @@ export const useRoomsStore = defineStore('rooms', () => {
     })
   }
 
-  const findRoomById = computed(() => (id: number) => rooms.value.find((r) => r.id === id))
+  const findRoomById = computed(
+    () =>
+      (id: number): IRoom | undefined =>
+        rooms.value.find((r) => r.id === id)
+  )
 
   const deleteMessage = (message: Message) => {
     const block = blocks.value[0].find((b) => b.id === (message.block as BlockMessages).id)
