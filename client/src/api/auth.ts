@@ -22,7 +22,7 @@ export class Auth {
       if (this.paths.includes(to.path) && this.paths.includes(from.path)) return next()
 
       try {
-        await refreshToken()
+        // await refreshToken()
         await getUser()
 
         if (error.value.message || !user.value?.username) {
