@@ -7,8 +7,9 @@ export const api = axios.create({
 })
 
 export const refreshToken = async () => {
-  const response = await api.get<ISignInUpDto>('/user/login/refresh', { withCredentials: true })
-  console.log(response)
+  const response = await api.get<ISignInUpDto>('user/login/refresh', {
+    withCredentials: true
+  })
 
   localStorage.setItem('token', response.data.accessToken)
 }
@@ -23,7 +24,11 @@ api.interceptors.response.use(
       originalRequest._isRetry = true
 
       try {
-        await refreshToken()
+        const response = await api.get<ISignInUpDto>('user/login/refresh', {
+          withCredentials: true
+        })
+
+        localStorage.setItem('token', response.data.accessToken)
         return api.request(originalRequest)
       } catch (e) {
         console.log('UnAuthorized!')
