@@ -36,6 +36,7 @@ export class UserController {
   @Get('login/refresh')
   async getNewTokens(@Req() req: Request) {
     const dto: RefreshTokenDto = { refreshToken: req.cookies['token'] };
+    console.log(dto);
 
     return this.userService.getNewTokens(dto);
   }
