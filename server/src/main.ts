@@ -10,7 +10,7 @@ async function bootstrap() {
 
   app.enableCors({
     credentials: true,
-    origin: 'https://client-eight-zeta.vercel.app',
+    origin: 'https://client-eight-zeta.vercel.app/',
   });
   app.setGlobalPrefix('api');
   app.use(cookieParser());
