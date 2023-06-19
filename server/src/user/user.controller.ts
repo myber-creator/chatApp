@@ -6,7 +6,7 @@ import {
   Post,
   UsePipes,
   ValidationPipe,
-  Req,
+  Request as Req,
   Res,
   Get,
 } from '@nestjs/common';
