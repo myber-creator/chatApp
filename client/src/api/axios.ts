@@ -10,6 +10,7 @@ export const refreshToken = async () => {
   const response = await api.get<ISignInUpDto>('user/login/refresh', {
     withCredentials: true
   })
+  console.log(response)
 
   localStorage.setItem('token', response.data.accessToken)
 }
