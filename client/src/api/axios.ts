@@ -7,7 +7,7 @@ export const api = axios.create({
 })
 
 export const refreshToken = async () => {
-  const response = await api.get<ISignInUpDto>('user/login/refresh')
+  const response = await api.get<ISignInUpDto>('/user/login/refresh')
   console.log(response)
 
   localStorage.setItem('token', response.data.accessToken)
