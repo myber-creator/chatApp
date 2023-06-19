@@ -1,5 +1,6 @@
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
+import { refreshToken } from './axios'
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 
 export class Auth {
@@ -21,21 +22,14 @@ export class Auth {
       if (this.paths.includes(to.path) && this.paths.includes(from.path)) return next()
 
       try {
+        await refreshToken()
         await getUser()
 
         if (error.value.message || !user.value?.username) {
           if (this.paths.includes(to.path)) return next()
 
           if (error.value.statusCode === 401) {
-            await getUser()
-
-            if (error.value.statusCode === 401) {
-              return next('/signin')
-            } else {
-              if (this.paths.includes(to.path)) return next('/chat')
-
-              return next()
-            }
+            return next('/signin')
           }
 
           return next(false)

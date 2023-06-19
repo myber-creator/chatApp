@@ -6,6 +6,14 @@ export const api = axios.create({
   withCredentials: true
 })
 
+export const refreshToken = async () => {
+  const response = await api.get<ISignInUpDto>('/user/login/refresh', {
+    withCredentials: true
+  })
+
+  localStorage.setItem('token', response.data.accessToken)
+}
+
 api.interceptors.response.use(
   (config) => {
     return config
